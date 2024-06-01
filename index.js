@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 require('dotenv').config();
 const app = express();
@@ -31,10 +31,32 @@ async function run() {
 
         // collections 
         const campsCollections = client.db('LifeCare').collection('Camps');
-        // APIs
+        const userCollections = client.db('LifeCare').collection('Users');
+
+        // ------------APIs------------
+
+        // for camps
         app.get('/camps', async (req, res) => {
             const result = await campsCollections.find().toArray();
-            res.send(result) 
+            res.send(result)
+        })
+        app.get('/camp/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await campsCollections.findOne(query)
+            res.send(result)
+        })
+
+        // for Users
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const query = { email: user.email }
+            const isExist = await userCollections.findOne(query);
+            if (isExist) {
+               return res.send({ message: `welcome Back ! ${user.name}`, insertedId: null });
+            };
+            const result = await userCollections.insertOne(user);
+            res.send(result)
         })
 
 
