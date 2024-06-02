@@ -33,7 +33,16 @@ async function run() {
         // collections 
         const campsCollections = client.db('LifeCare').collection('Camps');
         const userCollections = client.db('LifeCare').collection('Users');
+        const registeredCampCollections = client.db('LifeCare').collection('RegisteredCamps');
+        const feedbackCollections = client.db('LifeCare').collection('Feedbacks');
 
+        // ------------Custom Middleware------------
+        const verifyToken = (req, res, next) => {
+
+        }
+        // const verifyToken = (req, res, next) => {
+
+        // }
         // ------------APIs------------
 
         // JWT
@@ -42,15 +51,21 @@ async function run() {
             const token = jwt.sign(user, process.env.ACCESS_KEY, {
                 expiresIn: '1h'
             })
-            res.send({token})
+            res.send({ token })
         })
 
 
         // for camps
         app.get('/camps', async (req, res) => {
-            const result = await campsCollections.find().toArray();
+            const search = req.query;
+            console.log(search);
+            const query = {
+                campName: { $regex: search.search , $options: 'i' }
+            }
+            const result = await campsCollections.find(query).toArray();
             res.send(result)
         })
+        
         app.get('/camp/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -70,6 +85,28 @@ async function run() {
             res.send(result)
         })
 
+        // for registered camps
+        app.post('/registeredCamp', async (req, res) => {
+            const registeredCamp = req.body;
+            const result = await registeredCampCollections.insertOne(registeredCamp);
+            const query = { _id: new ObjectId(registeredCamp.campId) }
+            const updateParticipatesNum = {
+                $inc: {
+                    Participant_Count: 1
+                }
+            }
+            if (result) {
+                await campsCollections.updateOne(query, updateParticipatesNum)
+            }
+            res.send(result)
+        })
+
+
+        // for feedbacks
+        app.get('/feedbacks', async (req, res) => {
+            const result = await feedbackCollections.find().toArray();
+            res.send(result)
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
