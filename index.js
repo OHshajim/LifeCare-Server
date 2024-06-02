@@ -1,6 +1,7 @@
 const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -35,6 +36,16 @@ async function run() {
 
         // ------------APIs------------
 
+        // JWT
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_KEY, {
+                expiresIn: '1h'
+            })
+            res.send({token})
+        })
+
+
         // for camps
         app.get('/camps', async (req, res) => {
             const result = await campsCollections.find().toArray();
@@ -53,7 +64,7 @@ async function run() {
             const query = { email: user.email }
             const isExist = await userCollections.findOne(query);
             if (isExist) {
-               return res.send({ message: `welcome Back ! ${user.name}`, insertedId: null });
+                return res.send({ message: `welcome Back ! ${user.name}`, insertedId: null });
             };
             const result = await userCollections.insertOne(user);
             res.send(result)
