@@ -60,12 +60,18 @@ async function run() {
             const search = req.query;
             console.log(search);
             const query = {
-                campName: { $regex: search.search , $options: 'i' }
+                campName: { $regex: search.search, $options: 'i' }
             }
             const result = await campsCollections.find(query).toArray();
             res.send(result)
         })
-        
+
+        // Popular camp
+        app.get('/popularCamps', async (req, res) => {
+            const result = await campsCollections.find().sort({ 'participantCount': -1 }).limit(6).toArray();
+            res.send(result)
+        })
+
         app.get('/camp/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
