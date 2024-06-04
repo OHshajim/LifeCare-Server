@@ -38,17 +38,16 @@ async function run() {
 
         // ------------Custom Middleware------------
         const verifyToken = (req, res, next) => {
-            if (!req.headers.Authorization) {
+            console.log(req.headers);
+            if (!req.headers.authorization) {
                 return res.status(401).send({ message: 'unauthorized Access' })
             }
-            const token = req.headers.Authorization.split(' ')[1];
-
-            jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+            const token = req.headers.authorization.split(' ')[1];
+            jwt.verify(token, process.env.ACCESS_KEY, (err, decoded) => {
                 if (err) {
                     return res.status(401).send({ message: 'unauthorized Access' })
                 }
                 req.decoded = decoded;
-                console.log(decoded);
                 next()
             })
         }
@@ -80,18 +79,21 @@ async function run() {
         // for camps
         app.get('/camps', async (req, res) => {
             const filter = req.query;
-            const { search, sort } = filter
+            const { search, sortBy } = filter
             console.log(filter);
             const query = {
                 campName: { $regex: search, $options: 'i' },
             }
-            const option = {
-                // sort: {
-                //     'sort': 1
-                // }
+
+            if (sortBy === '') {
+
+                const result = await campsCollections.find(query).toArray();
+                return res.send(result)
             }
-            const result = await campsCollections.find(query, option).toArray();
-            res.send(result)
+            else {
+                const result = await campsCollections.find(query).sort(sortBy).toArray();
+                return res.send(result)
+            }
         })
 
         // Popular camp
@@ -100,7 +102,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/camp/:id',verifyToken, async (req, res) => {
+        app.get('/camp/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await campsCollections.findOne(query)
@@ -120,7 +122,7 @@ async function run() {
         })
 
         // for registered camps
-        app.post('/registeredCamp',verifyToken, async (req, res) => {
+        app.post('/registeredCamp', verifyToken, async (req, res) => {
             const registeredCamp = req.body;
             const result = await registeredCampCollections.insertOne(registeredCamp);
             const query = { _id: new ObjectId(registeredCamp.campId) }
