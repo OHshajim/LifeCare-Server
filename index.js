@@ -38,7 +38,29 @@ async function run() {
 
         // ------------Custom Middleware------------
         const verifyToken = (req, res, next) => {
+            if (!req.headers.Authorization) {
+                return res.status(401).send({ message: 'unauthorized Access' })
+            }
+            const token = req.headers.Authorization.split(' ')[1];
 
+            jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+                if (err) {
+                    return res.status(401).send({ message: 'unauthorized Access' })
+                }
+                req.decoded = decoded;
+                console.log(decoded);
+                next()
+            })
+        }
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email
+            const query = { email: email };
+            const user = await userCollection.findOne(query)
+            const isAdmin = user?.role === 'admin'
+            if (!isAdmin) {
+                return res.status(403).send({ message: 'forbidden Access' })
+            }
+            next()
         }
         // const verifyToken = (req, res, next) => {
 
@@ -57,12 +79,18 @@ async function run() {
 
         // for camps
         app.get('/camps', async (req, res) => {
-            const search = req.query;
-            console.log(search);
+            const filter = req.query;
+            const { search, sort } = filter
+            console.log(filter);
             const query = {
-                campName: { $regex: search.search, $options: 'i' }
+                campName: { $regex: search, $options: 'i' },
             }
-            const result = await campsCollections.find(query).toArray();
+            const option = {
+                // sort: {
+                //     'sort': 1
+                // }
+            }
+            const result = await campsCollections.find(query, option).toArray();
             res.send(result)
         })
 
@@ -72,7 +100,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/camp/:id', async (req, res) => {
+        app.get('/camp/:id',verifyToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await campsCollections.findOne(query)
@@ -92,7 +120,7 @@ async function run() {
         })
 
         // for registered camps
-        app.post('/registeredCamp', async (req, res) => {
+        app.post('/registeredCamp',verifyToken, async (req, res) => {
             const registeredCamp = req.body;
             const result = await registeredCampCollections.insertOne(registeredCamp);
             const query = { _id: new ObjectId(registeredCamp.campId) }
