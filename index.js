@@ -115,7 +115,7 @@ async function run() {
             const query = { _id: new ObjectId(id) };
             const camp = req.body;
             const updatedCamp = {
-                $set:{
+                $set: {
                     ...camp
                 }
             }
@@ -137,6 +137,19 @@ async function run() {
 
 
         // for Users
+
+
+        app.get('/user/organizer/:email', verifyToken, async (req, res) => { // Organizer
+            const email = req.params.email;
+            const query = { email: email }
+            const user = await userCollections.findOne(query)
+            let organizer = false;
+            if (user) {
+                organizer = user?.role === 'organizer'
+            }
+            res.send({ organizer })
+        })
+
         app.post('/users', async (req, res) => {
             const user = req.body;
             const query = { email: user.email }
@@ -149,6 +162,14 @@ async function run() {
         })
 
         // for registered camps
+
+        app.get('/registeredCamps/:email', verifyToken, async (req, res) => { // Organizer
+            const email = req.params.email;
+            const query = { participantEmail: email }
+            const result = await registeredCampCollections.find(query).toArray()
+            res.send(result)
+        })
+
         app.post('/registeredCamp', verifyToken, async (req, res) => {
             const registeredCamp = req.body;
             const result = await registeredCampCollections.insertOne(registeredCamp);
