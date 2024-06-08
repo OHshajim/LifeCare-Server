@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
+const stripe = require("stripe")(process.env.PAYMENT_KEY);
 
 
 // middleware
@@ -192,6 +193,24 @@ async function run() {
             res.send(result)
         })
 
+
+
+
+        // Payment 
+        app.post('/create-payment-intent', async (req, res) => {
+            const { fees } = req.body;
+            const amount = parseInt(fees * 100)
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount:amount,
+                currency:"eur",
+               "payment_method_types": [
+                    "card",
+                ],
+            })
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            })
+        })
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
