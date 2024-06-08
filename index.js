@@ -99,15 +99,37 @@ async function run() {
             const result = await campsCollections.find().sort({ 'participantCount': -1 }).limit(6).toArray();
             res.send(result)
         })
+        app.get('/allCamps', async (req, res) => {
+            const result = await campsCollections.find().toArray();
+            res.send(result)
+        })
 
-        app.get('/camp/:id', verifyToken, async (req, res) => {
+        app.get('/camp/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await campsCollections.findOne(query)
             res.send(result)
         })
+        app.patch('/update-camp/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const camp = req.body;
+            const updatedCamp = {
+                $set:{
+                    ...camp
+                }
+            }
+            const result = await campsCollections.updateOne(query, updatedCamp)
+            res.send(result)
+        })
+        app.delete('/delete-camp/:id', verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await campsCollections.deleteOne(query)
+            res.send(result)
+        })
 
-        app.post('/camps',(req, res) => {
+        app.post('/camps', (req, res) => {
             const newCamp = req.body;
             const result = campsCollections.insertOne(newCamp);
             res.send(result)
@@ -133,7 +155,7 @@ async function run() {
             const query = { _id: new ObjectId(registeredCamp.campId) }
             const updateParticipatesNum = {
                 $inc: {
-                    Participant_Count: 1
+                    participantCount: 1
                 }
             }
             if (result) {
