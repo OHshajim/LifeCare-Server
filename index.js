@@ -30,7 +30,7 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
 
-        // collections 
+        // -------------collections---------------
         const campsCollections = client.db('LifeCare').collection('Camps');
         const userCollections = client.db('LifeCare').collection('Users');
         const registeredCampCollections = client.db('LifeCare').collection('RegisteredCamps');
@@ -61,9 +61,7 @@ async function run() {
             }
             next()
         }
-        // const verifyToken = (req, res, next) => {
 
-        // }
         // ------------APIs------------
 
         // JWT
@@ -108,6 +106,13 @@ async function run() {
             const result = await campsCollections.findOne(query)
             res.send(result)
         })
+
+        app.post('/camps',(req, res) => {
+            const newCamp = req.body;
+            const result = campsCollections.insertOne(newCamp);
+            res.send(result)
+        })
+
 
         // for Users
         app.post('/users', async (req, res) => {
