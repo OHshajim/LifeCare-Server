@@ -151,7 +151,23 @@ async function run() {
             }
             res.send({ organizer })
         })
-
+        app.get('/user/:email', verifyToken, async (req, res) => { 
+            const email = req.params.email;
+            const query = { email: email }
+            const result = await userCollections.findOne(query);
+            res.send(result)
+        })
+        app.patch('/user', async (req, res) => {
+            const user = req.body;
+            const query = { email: user.email }
+            const updatedUser = {
+                $set: {
+                    ...user
+                }
+            }
+            const result = await userCollections.updateOne(query,updatedUser);
+            res.send(result)
+        })
         app.post('/users', async (req, res) => {
             const user = req.body;
             const query = { email: user.email }
@@ -212,7 +228,7 @@ async function run() {
         })
 
         // Payment 
-        app.post('/create-payment-intent',verifyToken, async (req, res) => {
+        app.post('/create-payment-intent', verifyToken, async (req, res) => {
             const { fees } = req.body;
             const amount = parseInt(fees * 100);
             const paymentIntent = await stripe.paymentIntents.create({
@@ -225,14 +241,14 @@ async function run() {
             })
         })
 
-        app.get('/paidCamps/:email',verifyToken, async (req, res) => {
+        app.get('/paidCamps/:email', verifyToken, async (req, res) => {
             const email = req.params.email
             const filter = { email: email }
             const result = await paymentCollections.find(filter).toArray()
             res.send(result)
         })
 
-        app.post('/payment',verifyToken, async (req, res) => {
+        app.post('/payment', verifyToken, async (req, res) => {
             const payment = req.body;
             const result = await paymentCollections.insertOne(payment);
             const query = { _id: new ObjectId(payment.campId) }
