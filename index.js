@@ -140,6 +140,10 @@ async function run() {
 
         // for Users
 
+        app.get('/users', async (req, res) => {
+            const result = await userCollections.find().toArray();
+            res.send(result)
+        })
 
         app.get('/user/organizer/:email', verifyToken, async (req, res) => { // Organizer
             const email = req.params.email;
@@ -151,7 +155,7 @@ async function run() {
             }
             res.send({ organizer })
         })
-        app.get('/user/:email', verifyToken, async (req, res) => { 
+        app.get('/user/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
             const query = { email: email }
             const result = await userCollections.findOne(query);
@@ -165,7 +169,18 @@ async function run() {
                     ...user
                 }
             }
-            const result = await userCollections.updateOne(query,updatedUser);
+            const result = await userCollections.updateOne(query, updatedUser);
+            res.send(result)
+        })
+        app.patch('/update-user/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const updatedUser = {
+                $set: {
+                    role: 'organizer'
+                }
+            }
+            const result = await userCollections.updateOne(query, updatedUser);
             res.send(result)
         })
         app.post('/users', async (req, res) => {
@@ -178,7 +193,12 @@ async function run() {
             const result = await userCollections.insertOne(user);
             res.send(result)
         })
-
+        app.delete('/delete-user/:id', verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await userCollections.deleteOne(query);
+            res.send(result)
+        })
         // for registered camps
 
         app.get('/registeredCamps/:email', verifyToken, async (req, res) => { // Organizer
