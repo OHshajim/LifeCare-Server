@@ -177,6 +177,12 @@ async function run() {
             const result = await registeredCampCollections.findOne(query)
             res.send(result)
         })
+        app.delete('/registeredCamp/:id', verifyToken, async (req, res) => { // Organizer
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await registeredCampCollections.deleteOne(query)
+            res.send(result)
+        })
 
         app.post('/registeredCamp', verifyToken, async (req, res) => {
             const registeredCamp = req.body;
@@ -197,6 +203,11 @@ async function run() {
         // for feedbacks
         app.get('/feedbacks', async (req, res) => {
             const result = await feedbackCollections.find().toArray();
+            res.send(result)
+        })
+        app.post('/feedback', async (req, res) => {
+            const feedback = req.body;
+            const result = await feedbackCollections.insertOne(feedback)
             res.send(result)
         })
 
