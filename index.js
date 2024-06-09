@@ -201,7 +201,7 @@ async function run() {
         })
 
         // Payment 
-        app.post('/create-payment-intent', async (req, res) => {
+        app.post('/create-payment-intent',verifyToken, async (req, res) => {
             const { fees } = req.body;
             const amount = parseInt(fees * 100);
             const paymentIntent = await stripe.paymentIntents.create({
@@ -214,7 +214,14 @@ async function run() {
             })
         })
 
-        app.post('/payment', async (req, res) => {
+        app.get('/paidCamps/:email',verifyToken, async (req, res) => {
+            const email = req.params.email
+            const filter = { email: email }
+            const result = await paymentCollections.find(filter).toArray()
+            res.send(result)
+        })
+
+        app.post('/payment',verifyToken, async (req, res) => {
             const payment = req.body;
             const result = await paymentCollections.insertOne(payment);
             const query = { _id: new ObjectId(payment.campId) }
@@ -225,9 +232,10 @@ async function run() {
             }
             if (result.insertedId) {
                 const res = await registeredCampCollections.updateOne(query, updatedDoc)
-                }
+            }
             res.send(result)
         })
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
