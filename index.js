@@ -36,10 +36,11 @@ async function run() {
         const userCollections = client.db('LifeCare').collection('Users');
         const registeredCampCollections = client.db('LifeCare').collection('RegisteredCamps');
         const feedbackCollections = client.db('LifeCare').collection('Feedbacks');
+        const paymentCollections = client.db('LifeCare').collection('Payment');
 
         // ------------Custom Middleware------------
         const verifyToken = (req, res, next) => {
-            console.log(req.headers);
+            // console.log(req.headers);
             if (!req.headers.authorization) {
                 return res.status(401).send({ message: 'unauthorized Access' })
             }
@@ -170,6 +171,12 @@ async function run() {
             const result = await registeredCampCollections.find(query).toArray()
             res.send(result)
         })
+        app.get('/registeredCamp/:id', verifyToken, async (req, res) => { // Organizer
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await registeredCampCollections.findOne(query)
+            res.send(result)
+        })
 
         app.post('/registeredCamp', verifyToken, async (req, res) => {
             const registeredCamp = req.body;
@@ -193,23 +200,33 @@ async function run() {
             res.send(result)
         })
 
-
-
-
         // Payment 
         app.post('/create-payment-intent', async (req, res) => {
             const { fees } = req.body;
-            const amount = parseInt(fees * 100)
+            const amount = parseInt(fees * 100);
             const paymentIntent = await stripe.paymentIntents.create({
-                amount:amount,
-                currency:"eur",
-               "payment_method_types": [
-                    "card",
-                ],
+                amount: amount,
+                currency: "eur",
+                payment_method_types: ["card"],
             })
             res.send({
                 clientSecret: paymentIntent.client_secret,
             })
+        })
+
+        app.post('/payment', async (req, res) => {
+            const payment = req.body;
+            const result = await paymentCollections.insertOne(payment);
+            const query = { _id: new ObjectId(payment.campId) }
+            const updatedDoc = {
+                $set: {
+                    paymentStatus: 'paid'
+                }
+            }
+            if (result.insertedId) {
+                const res = await registeredCampCollections.updateOne(query, updatedDoc)
+                }
+            res.send(result)
         })
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
