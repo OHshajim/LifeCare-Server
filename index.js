@@ -56,9 +56,9 @@ async function run() {
         const verifyAdmin = async (req, res, next) => {
             const email = req.decoded.email
             const query = { email: email };
-            const user = await userCollection.findOne(query)
-            const isAdmin = user?.role === 'admin'
-            if (!isAdmin) {
+            const user = await userCollections.findOne(query)
+            const isOrganizer = user?.role === 'organizer'
+            if (!isOrganizer) {
                 return res.status(403).send({ message: 'forbidden Access' })
             }
             next()
@@ -102,7 +102,12 @@ async function run() {
             res.send(result)
         })
         app.get('/allCamps', async (req, res) => {
-            const result = await campsCollections.find().toArray();
+            const filter = req.query;
+            const { search } = filter
+            const query = {
+                campName: { $regex: search, $options: 'i' }
+            }
+            const result = await campsCollections.find(query).toArray();
             res.send(result)
         })
 
@@ -140,8 +145,13 @@ async function run() {
 
         // for Users
 
-        app.get('/users', async (req, res) => {
-            const result = await userCollections.find().toArray();
+        app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
+            const filter = req.query;
+            const { search } = filter
+            const query = {
+                name: { $regex: search, $options: 'i' }
+            }
+            const result = await userCollections.find(query).toArray();
             res.send(result)
         })
 
@@ -161,7 +171,7 @@ async function run() {
             const result = await userCollections.findOne(query);
             res.send(result)
         })
-        app.patch('/user', async (req, res) => {
+        app.patch('/user', verifyToken, async (req, res) => {
             const user = req.body;
             const query = { email: user.email }
             const updatedUser = {
@@ -172,7 +182,7 @@ async function run() {
             const result = await userCollections.updateOne(query, updatedUser);
             res.send(result)
         })
-        app.patch('/update-user/:id', async (req, res) => {
+        app.patch('/update-user/:id', verifyAdmin, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const updatedUser = {
@@ -193,27 +203,39 @@ async function run() {
             const result = await userCollections.insertOne(user);
             res.send(result)
         })
-        app.delete('/delete-user/:id', verifyToken, async (req, res) => {
+        app.delete('/delete-user/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await userCollections.deleteOne(query);
             res.send(result)
         })
+
         // for registered camps
 
-        app.get('/registeredCamps/:email', verifyToken, async (req, res) => { // Organizer
-            const email = req.params.email;
-            const query = { participantEmail: email }
+        app.get('/registers', verifyToken, verifyAdmin, async (req, res) => { // Organizer
+            const filter = req.query;
+            const { search } = filter
+            const query = {
+                campName: { $regex: search, $options: 'i' }
+            }
             const result = await registeredCampCollections.find(query).toArray()
             res.send(result)
         })
-        app.get('/registeredCamp/:id', verifyToken, async (req, res) => { // Organizer
+        app.get('/registeredCamps/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
+            const filter = req.query;
+            const { search } = filter
+            const query = { participantEmail: email ,campName: { $regex: search, $options: 'i' }}
+            const result = await registeredCampCollections.find(query).toArray()
+            res.send(result)
+        })
+        app.get('/registeredCamp/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await registeredCampCollections.findOne(query)
             res.send(result)
         })
-        app.delete('/registeredCamp/:id', verifyToken, async (req, res) => { // Organizer
+        app.delete('/registeredCamp/:id', verifyToken, verifyAdmin, async (req, res) => { // Organizer
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await registeredCampCollections.deleteOne(query)
@@ -241,16 +263,17 @@ async function run() {
             const result = await feedbackCollections.find().toArray();
             res.send(result)
         })
-        app.post('/feedback', async (req, res) => {
+        app.post('/feedback', verifyToken, async (req, res) => {
             const feedback = req.body;
             const result = await feedbackCollections.insertOne(feedback)
             res.send(result)
         })
 
         // Payment 
-        app.post('/create-payment-intent', verifyToken, async (req, res) => {
+        app.post('/create-payment-intent', async (req, res) => {
             const { fees } = req.body;
             const amount = parseInt(fees * 100);
+            console.log(amount);
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
                 currency: "eur",
@@ -262,8 +285,13 @@ async function run() {
         })
 
         app.get('/paidCamps/:email', verifyToken, async (req, res) => {
-            const email = req.params.email
-            const filter = { email: email }
+            const email = req.params.email;
+            const Search = req.query;
+            const { search } = Search
+            if (email !== req.decoded.email) {
+                return res.status(401).send({ message: 'unauthorized access' })
+            }
+            const filter = { email: email , campName: { $regex: search, $options: 'i' }}
             const result = await paymentCollections.find(filter).toArray()
             res.send(result)
         })
