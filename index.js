@@ -117,7 +117,7 @@ async function run() {
             const result = await campsCollections.findOne(query)
             res.send(result)
         })
-        app.patch('/update-camp/:id', async (req, res) => {
+        app.patch('/update-camp/:id', verifyToken,verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const camp = req.body;
@@ -129,14 +129,14 @@ async function run() {
             const result = await campsCollections.updateOne(query, updatedCamp)
             res.send(result)
         })
-        app.delete('/delete-camp/:id', verifyToken, async (req, res) => {
+        app.delete('/delete-camp/:id', verifyToken,verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await campsCollections.deleteOne(query)
             res.send(result)
         })
 
-        app.post('/camps', (req, res) => {
+        app.post('/camps',verifyToken,verifyAdmin, (req, res) => {
             const newCamp = req.body;
             const result = campsCollections.insertOne(newCamp);
             res.send(result)
@@ -182,7 +182,7 @@ async function run() {
             const result = await userCollections.updateOne(query, updatedUser);
             res.send(result)
         })
-        app.patch('/update-user/:id', verifyAdmin, verifyAdmin, async (req, res) => {
+        app.patch('/update-user/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const updatedUser = {
