@@ -103,11 +103,14 @@ async function run() {
         })
         app.get('/allCamps', async (req, res) => {
             const filter = req.query;
-            const { search } = filter
+            const { search, page } = filter
             const query = {
                 campName: { $regex: search, $options: 'i' }
             }
-            const result = await campsCollections.find(query).toArray();
+            const result = await campsCollections.find(query)
+                .skip(page * 10)
+                .limit(10)
+                .toArray();
             res.send(result)
         })
 
@@ -214,27 +217,33 @@ async function run() {
 
         app.get('/registers', verifyToken, verifyAdmin, async (req, res) => { // Organizer
             const filter = req.query;
-            const { search } = filter
+            const { search, page } = filter
             const query = {
                 campName: { $regex: search, $options: 'i' }
             }
-            const result = await registeredCampCollections.find(query).toArray()
+            const result = await registeredCampCollections.find(query)
+                .skip(page * 10)
+                .limit(10)
+                .toArray();
             res.send(result)
         })
         app.get('/registeredCamps/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
             const filter = req.query;
-            const { search } = filter
-           
-                const query = { participantEmail: email, campName: { $regex: search, $options: 'i' } }
-                const result = await registeredCampCollections.find(query).toArray()
-                res.send(result)
+            const { search, page } = filter
+
+            const query = { participantEmail: email, campName: { $regex: search, $options: 'i' } }
+            const result = await registeredCampCollections.find(query)
+                .skip(page * 10)
+                .limit(10)
+                .toArray();
+            res.send(result)
         })
         app.get('/registerCampAnalysis/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
-                const query = { participantEmail: email}
-                const result = await registeredCampCollections.find(query).toArray()
-                res.send(result)
+            const query = { participantEmail: email }
+            const result = await registeredCampCollections.find(query).toArray()
+            res.send(result)
         })
         app.get('/registeredCamp/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
@@ -242,7 +251,7 @@ async function run() {
             const result = await registeredCampCollections.findOne(query)
             res.send(result)
         })
-        app.delete('/registeredCamp/:id', verifyToken, verifyAdmin, async (req, res) => { // Organizer
+        app.delete('/registeredCamp/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await registeredCampCollections.deleteOne(query)
@@ -294,12 +303,15 @@ async function run() {
         app.get('/paidCamps/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
             const Search = req.query;
-            const { search } = Search
+            const { search, page } = Search
             if (email !== req.decoded.email) {
                 return res.status(401).send({ message: 'unauthorized access' })
             }
             const filter = { email: email, campName: { $regex: search, $options: 'i' } }
-            const result = await paymentCollections.find(filter).toArray()
+            const result = await paymentCollections.find(filter)
+                .skip(page * 10)
+                .limit(10)
+                .toArray();
             res.send(result)
         })
 
@@ -315,6 +327,46 @@ async function run() {
             if (result.insertedId) {
                 const res = await registeredCampCollections.updateOne(query, updatedDoc)
             }
+            res.send(result)
+        })
+
+
+
+        // Number of total  data
+
+        // participants
+        app.get('/userPaidCamps/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
+            if (email !== req.decoded.email) {
+                return res.status(401).send({ message: 'unauthorized access' })
+            }
+            const filter = { email: email }
+            const result = await paymentCollections.find(filter).toArray()
+            res.send(result)
+        })
+
+        app.get('/userRegisteredCamps/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
+            if (email !== req.decoded.email) {
+                return res.status(401).send({ message: 'unauthorized access' })
+            }
+            const filter = { participantEmail: email }
+            const result = await registeredCampCollections.find(filter).toArray();
+            console.log(result, email);
+            res.send(result)
+        })
+
+        // organizer
+        app.get('/AllUsers', verifyToken, async (req, res) => {
+            const result = await userCollections.find().toArray()
+            res.send(result)
+        })
+        app.get('/AllCampsOfPage', verifyToken, async (req, res) => {
+            const result = await campsCollections.find().toArray()
+            res.send(result)
+        })
+        app.get('AllUsersRegistrations', verifyToken, async (req, res) => {
+            const result = await registeredCampCollections.find().toArray()
             res.send(result)
         })
 
