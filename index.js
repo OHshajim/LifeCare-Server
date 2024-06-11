@@ -29,7 +29,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         // -------------collections---------------
         const campsCollections = client.db('LifeCare').collection('Camps');
@@ -117,7 +117,7 @@ async function run() {
             const result = await campsCollections.findOne(query)
             res.send(result)
         })
-        app.patch('/update-camp/:id', verifyToken,verifyAdmin, async (req, res) => {
+        app.patch('/update-camp/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const camp = req.body;
@@ -129,14 +129,14 @@ async function run() {
             const result = await campsCollections.updateOne(query, updatedCamp)
             res.send(result)
         })
-        app.delete('/delete-camp/:id', verifyToken,verifyAdmin, async (req, res) => {
+        app.delete('/delete-camp/:id', verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await campsCollections.deleteOne(query)
             res.send(result)
         })
 
-        app.post('/camps',verifyToken,verifyAdmin, (req, res) => {
+        app.post('/camps', verifyToken, verifyAdmin, (req, res) => {
             const newCamp = req.body;
             const result = campsCollections.insertOne(newCamp);
             res.send(result)
@@ -225,9 +225,16 @@ async function run() {
             const email = req.params.email;
             const filter = req.query;
             const { search } = filter
-            const query = { participantEmail: email ,campName: { $regex: search, $options: 'i' }}
-            const result = await registeredCampCollections.find(query).toArray()
-            res.send(result)
+           
+                const query = { participantEmail: email, campName: { $regex: search, $options: 'i' } }
+                const result = await registeredCampCollections.find(query).toArray()
+                res.send(result)
+        })
+        app.get('/registerCampAnalysis/:email', verifyToken, async (req, res) => {
+            const email = req.params.email;
+                const query = { participantEmail: email}
+                const result = await registeredCampCollections.find(query).toArray()
+                res.send(result)
         })
         app.get('/registeredCamp/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
@@ -291,7 +298,7 @@ async function run() {
             if (email !== req.decoded.email) {
                 return res.status(401).send({ message: 'unauthorized access' })
             }
-            const filter = { email: email , campName: { $regex: search, $options: 'i' }}
+            const filter = { email: email, campName: { $regex: search, $options: 'i' } }
             const result = await paymentCollections.find(filter).toArray()
             res.send(result)
         })
@@ -312,8 +319,8 @@ async function run() {
         })
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // await client.db("admin").command({ ping: 1 });
+        console.log(" successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
