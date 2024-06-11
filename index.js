@@ -150,11 +150,14 @@ async function run() {
 
         app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
             const filter = req.query;
-            const { search } = filter
+            const { search, page } = filter
             const query = {
                 name: { $regex: search, $options: 'i' }
             }
-            const result = await userCollections.find(query).toArray();
+            const result = await userCollections.find(query)
+            .skip(page * 10)
+                .limit(10)
+                .toArray();
             res.send(result)
         })
 
@@ -352,7 +355,6 @@ async function run() {
             }
             const filter = { participantEmail: email }
             const result = await registeredCampCollections.find(filter).toArray();
-            console.log(result, email);
             res.send(result)
         })
 
@@ -365,7 +367,7 @@ async function run() {
             const result = await campsCollections.find().toArray()
             res.send(result)
         })
-        app.get('AllUsersRegistrations', verifyToken, async (req, res) => {
+        app.get('/AllUsersRegistrations', verifyToken, async (req, res) => {
             const result = await registeredCampCollections.find().toArray()
             res.send(result)
         })
