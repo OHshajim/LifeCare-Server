@@ -3,4 +3,7 @@
         DB_USER= {name} 
         DB_PASS= {pass}
         ACCESS_KEY= {token}
-2. install npm packages ---->{express, cors , dotenv, mongodb,jwt}
+        PAYMENT_KEY= {key}
+2. install npm packages ---->{express, cors , dotenv, mongodb, jwt ,stripe}
+
+Live site url : https://lifecamp-server.vercel.app/

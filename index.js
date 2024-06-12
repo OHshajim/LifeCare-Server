@@ -81,8 +81,11 @@ async function run() {
             const filter = req.query;
             const { search, sortBy } = filter
             console.log(filter);
-            const query = {
-                campName: { $regex: search, $options: 'i' },
+            let query = {}
+            if (search) {
+                query = {
+                    campName: { $regex: search, $options: 'i' },
+                }
             }
 
             if (sortBy === '') {
@@ -104,8 +107,11 @@ async function run() {
         app.get('/allCamps', async (req, res) => {
             const filter = req.query;
             const { search, page } = filter
-            const query = {
-                campName: { $regex: search, $options: 'i' }
+            let query = {}
+            if (search) {
+                query = {
+                    campName: { $regex: search, $options: 'i' }
+                }
             }
             const result = await campsCollections.find(query)
                 .skip(page * 10)
@@ -151,11 +157,14 @@ async function run() {
         app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
             const filter = req.query;
             const { search, page } = filter
-            const query = {
-                name: { $regex: search, $options: 'i' }
+            let query = {}
+            if (search) {
+                query = {
+                    campName: { $regex: search, $options: 'i' }
+                }
             }
             const result = await userCollections.find(query)
-            .skip(page * 10)
+                .skip(page * 10)
                 .limit(10)
                 .toArray();
             res.send(result)
@@ -221,8 +230,11 @@ async function run() {
         app.get('/registers', verifyToken, verifyAdmin, async (req, res) => { // Organizer
             const filter = req.query;
             const { search, page } = filter
-            const query = {
-                campName: { $regex: search, $options: 'i' }
+            let query = {}
+            if (search) {
+                query = {
+                    campName: { $regex: search, $options: 'i' }
+                }
             }
             const result = await registeredCampCollections.find(query)
                 .skip(page * 10)
@@ -234,8 +246,10 @@ async function run() {
             const email = req.params.email;
             const filter = req.query;
             const { search, page } = filter
-
-            const query = { participantEmail: email, campName: { $regex: search, $options: 'i' } }
+            let query = { participantEmail: email}
+            if (search) {
+                 query = { participantEmail: email, campName: { $regex: search, $options: 'i' } }
+            }
             const result = await registeredCampCollections.find(query)
                 .skip(page * 10)
                 .limit(10)
@@ -310,8 +324,12 @@ async function run() {
             if (email !== req.decoded.email) {
                 return res.status(401).send({ message: 'unauthorized access' })
             }
-            const filter = { email: email, campName: { $regex: search, $options: 'i' } }
-            const result = await paymentCollections.find(filter)
+
+            let query = { email: email }
+            if (search) {
+               query = { email: email, campName: { $regex: search, $options: 'i' } }
+            }
+            const result = await paymentCollections.find(query)
                 .skip(page * 10)
                 .limit(10)
                 .toArray();
