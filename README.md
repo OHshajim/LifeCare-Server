@@ -16,4 +16,5 @@ NodeJS || ExpressJS || MongoDB || Stripe || JWT
        d. PAYMENT_KEY= {key}<br/>
 2. install npm packages ---->{express, cors , dotenv, mongodb, jwt ,stripe}
 
-Live site url : https://lifecamp-server.vercel.app/
+Live site url : https://lifecamp-server.vercel.app/ <br/>
+Client Side Repository Link: https://github.com/OHshajim/LifeCare-Client
